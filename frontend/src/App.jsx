@@ -10,7 +10,9 @@ function App() {
   return (
     <>
       <BrowserRouter>
+      <div className='pt-20'>
         <Navbar/>
+      </div>
         <Routes>
           <Route path = '/' element={<Home/>}  />
           <Route path = '/addLaundary' element={<AddLaundary/>}  />
