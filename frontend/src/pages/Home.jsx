@@ -1,236 +1,123 @@
-import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, Droplets, Truck, CheckCircle } from 'lucide-react';
 
-// NOTE FOR FONT AWESOME:
-// Add this line to your public/index.html file inside the <head> section:
-// <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+// --- SVG Icons for a polished look without extra libraries ---
+const WashingMachineIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
+    <path d="M12 12v8" />
+    <path d="M16 16.5c0 1.38-1.12 2.5-2.5 2.5S11 17.88 11 16.5" />
+    <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+  </svg>
+);
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-// --- Child Component for Individual Laundry Cards ---
-const LaundryCard = ({ item, onUpdate, onDelete }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState(item);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const laundryItems = Object.keys(item).filter(key => typeof item[key] === 'number' && !["__v", "_id", "roomId"].includes(key));
-
-  const handleQuantityChange = (itemName, amount) => {
-    setEditedData(prevData => ({
-      ...prevData,
-      [itemName]: Math.max(0, (prevData[itemName] || 0) + amount),
-    }));
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const token = localStorage.getItem("jwt");
-      const response = await axios.put(`${backendUrl}/laundry/${item._id}`, editedData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      onUpdate(response.data.data); // Update the parent state with the new data
-      setIsEditing(false);
-      alert("Entry updated successfully!");
-    } catch (err) {
-      console.error("Error updating laundry entry:", err);
-      alert("Failed to update entry. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditedData(item); // Revert any changes
-    setIsEditing(false);
-  };
-  
-  const formatLabel = (key) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-  const getClothesCount = (person) => Object.values(person).reduce((sum, value) => (typeof value === 'number' ? sum + value : sum), 0);
-
-  // --- Display View ---
-  if (!isEditing) {
-    return (
-      <div className="bg-white shadow-lg rounded-xl p-5 border flex flex-col">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">{item.personName}</h3>
-            <p className="text-sm text-gray-500">Room: {item.roomId}</p>
-          </div>
-          <div className="flex items-center gap-4 text-lg">
-            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-blue-600 transition"><i className="fas fa-edit"></i></button>
-            <button onClick={() => onDelete(item._id)} className="text-gray-500 hover:text-red-600 transition"><i className="fas fa-trash-alt"></i></button>
-          </div>
-        </div>
-        <ul className="flex-grow space-y-1 mb-3">
-          {Object.entries(item).filter(([key, value]) => typeof value === "number" && value > 0 && !["__v", "_id", "roomId"].includes(key)).map(([key, value]) => (
-            <li key={key} className="flex justify-between text-sm text-gray-600 border-b py-1">
-              <span className="capitalize">{formatLabel(key)}</span>
-              <span className="font-semibold">{value}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="border-t pt-3 mt-auto">
-          <div className="flex justify-between items-center text-red-700 font-bold text-lg">
-            <span>Total Items:</span>
-            <span>{getClothesCount(item)}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- Edit View ---
-  return (
-    <div className="bg-white shadow-2xl rounded-xl p-5 border-2 border-blue-500 flex flex-col ring-4 ring-blue-200">
-      <h3 className="text-xl font-bold text-gray-800 mb-3">{item.personName} (Editing)</h3>
-      <div className="flex-grow space-y-2 mb-4 overflow-y-auto max-h-64 pr-2">
-        {laundryItems.map(itemName => (
-          <div key={itemName} className="flex justify-between items-center">
-            <span className="capitalize text-sm text-gray-600">{formatLabel(itemName)}</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => handleQuantityChange(itemName, -1)} className="w-7 h-7 font-bold bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition flex items-center justify-center text-lg">−</button>
-              <span className="w-10 text-center font-semibold">{editedData[itemName]}</span>
-              <button onClick={() => handleQuantityChange(itemName, 1)} className="w-7 h-7 font-bold bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition flex items-center justify-center text-lg">+</button>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="border-t pt-3 mt-auto flex gap-3">
-        <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition shadow-md disabled:bg-gray-400">
-          {isSaving ? 'Saving...' : 'Save'}
-        </button>
-        <button onClick={handleCancel} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition">
-          Cancel
-        </button>
-      </div>
+const FeatureCard = ({ icon, title, description }) => (
+  <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100">
+    <div className="flex items-center justify-center h-16 w-16 mb-4 bg-red-100 rounded-full">
+      {icon}
     </div>
-  );
-};
+    <h3 className="text-xl font-bold text-gray-800 mb-2" style={{ fontFamily: "Poppins" }}>{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </div>
+);
 
-
-// --- Main Home Component ---
 const Home = () => {
-  const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [laundryData, setLaundryData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchLaundryData();
-  }, [selectedDate]);
-
-  const fetchLaundryData = () => {
-    setIsLoading(true);
-    axios
-      .get(`${backendUrl}/home-laundry?date=${selectedDate}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("jwt")}` },
-      })
-      .then((res) => setLaundryData(res.data))
-      .catch((err) => {
-        console.error("Error fetching laundry data:", err);
-        setLaundryData([]);
-      })
-      .finally(() => setIsLoading(false));
-  };
-
-  const dailySummary = useMemo(() => {
-    const combined = {};
-    let totalCount = 0;
-    laundryData.forEach((entry) => {
-      Object.entries(entry).forEach(([key, value]) => {
-        if (typeof value === "number" && !["__v", "_id", "roomId"].includes(key)) {
-          combined[key] = (combined[key] || 0) + value;
-          totalCount += value;
-        }
-      });
-    });
-    const slipItems = Object.entries(combined).filter(([, value]) => value > 0);
-    return { slipItems, totalCount };
-  }, [laundryData]);
-
-  const handleDelete = async (laundryId) => {
-    if (window.confirm("Are you sure you want to delete this laundry entry?")) {
-      try {
-        setLaundryData(laundryData.filter((item) => item._id !== laundryId)); // Optimistic UI update
-        await axios.delete(`${backendUrl}/laundry/${laundryId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("jwt")}` },
-        });
-        alert("Entry deleted successfully!");
-      } catch (err) {
-        console.error("Error deleting laundry entry:", err);
-        alert("Failed to delete entry. Please try again.");
-        fetchLaundryData(); // Re-fetch data to revert optimistic update on error
-      }
-    }
-  };
-
-  const handleUpdate = (updatedItem) => {
-    setLaundryData(laundryData.map(item => item._id === updatedItem._id ? updatedItem : item));
-  };
-  
-  const formatLabel = (key) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col sm:flex-row justify-between items-center mb-8 pb-4 border-b">
-          <h1 style={{ fontFamily: "Bebas Neue" }} className="tracking-wider text-4xl font-semibold text-red-700 mb-4 sm:mb-0">
-            Laundry Dashboard
+    <div className="bg-gray-50 text-gray-800">
+      {/* ===== Hero Section ===== */}
+      <section className="relative bg-zinc-900 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-black opacity-80"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
+          <h1 style={{ fontFamily: "Bebas Neue" }} className="text-5xl sm:text-7xl lg:text-8xl font-extrabold tracking-wider">
+            Laundry Day, <span className="text-red-500">Simplified.</span>
           </h1>
-          <div className="flex items-center gap-2">
-            <label htmlFor="date" className="font-semibold text-gray-700">Select Date:</label>
-            <input
-              type="date"
-              id="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          <p style={{ fontFamily: "Poppins" }} className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-gray-300">
+            Say goodbye to lost clothes and wasted time. Submit, track, and manage your hostel laundry effortlessly.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/addLaundary"
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Get Started
+            </Link>
+            <Link
+              to="/track"
+              className="w-full sm:w-auto bg-transparent hover:bg-white/10 text-white font-semibold py-3 px-8 rounded-lg text-lg transition duration-300 border-2 border-white"
+            >
+              Track Your Laundry
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Features Section ===== */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 style={{ fontFamily: "Bebas Neue" }} className="text-4xl font-bold tracking-wider text-gray-800">How It Works</h2>
+          <p style={{ fontFamily: "Poppins" }} className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+            A simple three-step process to handle all your laundry needs.
+          </p>
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<Droplets className="h-8 w-8 text-red-500" />}
+              title="1. Submit Your Bag"
+              description="Easily select your clothes and quantities through our simple submission form. No more paper slips!"
+            />
+            <FeatureCard
+              icon={<Truck className="h-8 w-8 text-red-500" />}
+              title="2. Live Tracking"
+              description="Know exactly where your laundry is. Get real-time updates from washing to ready for pickup."
+            />
+            <FeatureCard
+              icon={<CheckCircle className="h-8 w-8 text-red-500" />}
+              title="3. Easy Pickup"
+              description="Receive a notification the moment your fresh, clean laundry is ready. It's that simple."
             />
           </div>
-        </header>
+        </div>
+      </section>
 
-        {isLoading ? (
-          <p className="text-center text-gray-500 text-lg">Loading records...</p>
-        ) : laundryData.length === 0 ? (
-          <div className="text-center bg-white p-12 rounded-xl shadow-md border">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">No Laundry Found</h2>
-            <p className="text-gray-500 mb-6">There are no laundry records for the selected date.</p>
-            <button
-              onClick={() => navigate('/addLaundary')}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition shadow-md"
-            >
-              Add New Laundry
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {laundryData.map((item) => (
-                <LaundryCard key={item._id} item={item} onUpdate={handleUpdate} onDelete={handleDelete} />
-              ))}
-            </div>
-
-            <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-xl shadow-lg border sticky top-8">
-                <h2 className="text-2xl font-bold text-gray-800 border-b pb-4 mb-4">Daily Summary</h2>
-                <ul className="space-y-2 mb-4">
-                  {dailySummary.slipItems.map(([key, value]) => (
-                    <li key={key} className="flex justify-between border-b py-1 text-gray-700">
-                      <span className="capitalize">{formatLabel(key)}</span>
-                      <span className="font-semibold">{value}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="text-right font-bold text-lg text-blue-800 border-t pt-2">
-                  Total Clothes for the Day: {dailySummary.totalCount}
-                </div>
+      {/* ===== Interactive Demo Section ===== */}
+      <section className="bg-white py-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <WashingMachineIcon />
+          <h2 style={{ fontFamily: "Bebas Neue" }} className="text-4xl font-bold tracking-wider text-gray-800 mt-4">
+            Never Lose a Sock Again
+          </h2>
+          <p style={{ fontFamily: "Poppins" }} className="mt-4 text-lg text-gray-600">
+            Our digital tracking system ensures every item you submit is accounted for. Check the status of your laundry in real-time.
+          </p>
+          <div className="mt-8 p-6 bg-gray-100 rounded-xl shadow-inner">
+            <div className="flex items-center justify-between text-left">
+              <div>
+                <p className="font-semibold text-gray-700">Your T-Shirt</p>
+                <p className="text-sm text-gray-500">Status Update: 2 mins ago</p>
+              </div>
+              <div className="bg-green-200 text-green-800 font-bold text-sm px-3 py-1 rounded-full">
+                WASHING
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+      
+      {/* ===== Final CTA Section ===== */}
+      <section className="bg-zinc-800 py-20 px-4 text-center text-white">
+         <h2 style={{ fontFamily: "Bebas Neue" }} className="text-4xl font-bold tracking-wider">
+            Ready for a Simpler Laundry Day?
+          </h2>
+          <p style={{ fontFamily: "Poppins" }} className="mt-4 max-w-2xl mx-auto text-lg text-gray-300">
+            Create an account and submit your first laundry bag in minutes.
+          </p>
+          <Link
+              to="/signup"
+              className="mt-8 inline-block bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-10 rounded-lg text-lg transition duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Sign Up Now
+            </Link>
+      </section>
     </div>
   );
 };
