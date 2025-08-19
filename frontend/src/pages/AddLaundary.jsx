@@ -59,6 +59,9 @@ const AddLaundary = () => {
       }
 
       const token = localStorage.getItem("jwt");
+      if(!token){
+        navigate("/signup");
+      }
       const response = await axios.post(`${backendUrl}/handlelaundary`, itemsToSubmit, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -67,7 +70,7 @@ const AddLaundary = () => {
       console.log("Laundry submitted:", response.data);
       alert("Your laundry has been submitted successfully!");
       reset();
-      navigate("/");
+      navigate("/displayLaundary");
     } catch (err) {
       console.error("Error submitting laundry:", err);
       alert("Submission failed. Please try again.");

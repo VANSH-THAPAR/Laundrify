@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // --- SVG Icons (No external library needed, tailored to your features) ---
@@ -9,7 +9,7 @@ const HistoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-8
 
 // --- Sub-components for a clean and structured layout ---
 
-const HeroSection = () => (
+const HeroSection = ({ isLoggedIn }) => (
   <section className="relative bg-zinc-900 text-white overflow-hidden">
     <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-black opacity-80"></div>
     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
@@ -21,16 +21,16 @@ const HeroSection = () => (
       </p>
       <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
         <Link
-          to="/addLaundary"
+          to={isLoggedIn ? "/addLaundary" : "/signup"}
           className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 shadow-lg"
         >
           Get Started
         </Link>
         <Link
-          to="/history"
+          to={isLoggedIn ? "/displayLaundary" : "/signup"}
           className="w-full sm:w-auto bg-transparent hover:bg-white/10 text-white font-semibold py-3 px-8 rounded-lg text-lg transition duration-300 border-2 border-white"
         >
-          View My History
+          Display Laundry
         </Link>
       </div>
     </div>
@@ -118,9 +118,17 @@ const CallToActionSection = () => (
 
 // --- Main Home Component ---
 const Home = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if a JWT token exists in local storage to determine login status
+    const token = localStorage.getItem("jwt");
+    setIsLoggedIn(!!token);
+  }, []);
+
   return (
     <div className="bg-gray-50 text-gray-800">
-      <HeroSection />
+      <HeroSection isLoggedIn={isLoggedIn} />
       <FeaturesSection />
       <InteractiveDemoSection />
       <CallToActionSection />

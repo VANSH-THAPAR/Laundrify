@@ -47,27 +47,33 @@ const LaundryCard = ({ item, onUpdate, onDelete }) => {
   };
   
   const formatLabel = (key) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-  const getClothesCount = (person) => Object.values(person).reduce((sum, value) => (typeof value === 'number' ? sum + value : sum), 0);
+  
+  // CORRECTED LOGIC: This function now correctly filters out non-laundry items before summing.
+  const getClothesCount = (person) => {
+    return Object.entries(person)
+      .filter(([key, value]) => typeof value === "number" && !["__v", "_id", "roomId"].includes(key))
+      .reduce((sum, [, value]) => sum + value, 0);
+  };
 
   // --- Display View ---
   if (!isEditing) {
     return (
-      <div className="bg-white shadow-lg rounded-xl p-5 border flex flex-col">
+      <div className="bg-white shadow-lg rounded-xl p-5 border flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">{item.personName}</h3>
+            <h3 className="text-xl font-bold text-gray-800" style={{fontFamily: "Poppins"}}>{item.personName}</h3>
             <p className="text-sm text-gray-500">Room: {item.roomId}</p>
           </div>
           <div className="flex items-center gap-4 text-lg">
-            <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-blue-600 transition"><i className="fas fa-edit"></i></button>
-            <button onClick={() => onDelete(item._id)} className="text-gray-500 hover:text-red-600 transition"><i className="fas fa-trash-alt"></i></button>
+            <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 transition"><i className="fas fa-edit"></i></button>
+            <button onClick={() => onDelete(item._id)} className="text-gray-400 hover:text-red-600 transition"><i className="fas fa-trash-alt"></i></button>
           </div>
         </div>
         <ul className="flex-grow space-y-1 mb-3">
           {Object.entries(item).filter(([key, value]) => typeof value === "number" && value > 0 && !["__v", "_id", "roomId"].includes(key)).map(([key, value]) => (
             <li key={key} className="flex justify-between text-sm text-gray-600 border-b py-1">
               <span className="capitalize">{formatLabel(key)}</span>
-              <span className="font-semibold">{value}</span>
+              <span className="font-semibold text-gray-800">{value}</span>
             </li>
           ))}
         </ul>
@@ -83,22 +89,22 @@ const LaundryCard = ({ item, onUpdate, onDelete }) => {
 
   // --- Edit View ---
   return (
-    <div className="bg-white shadow-2xl rounded-xl p-5 border-2 border-blue-500 flex flex-col ring-4 ring-blue-200">
-      <h3 className="text-xl font-bold text-gray-800 mb-3">{item.personName} (Editing)</h3>
+    <div className="bg-white shadow-2xl rounded-xl p-5 border-2 border-red-500 flex flex-col ring-4 ring-red-100">
+      <h3 className="text-xl font-bold text-gray-800 mb-3" style={{fontFamily: "Poppins"}}>{item.personName} (Editing)</h3>
       <div className="flex-grow space-y-2 mb-4 overflow-y-auto max-h-64 pr-2">
         {laundryItems.map(itemName => (
           <div key={itemName} className="flex justify-between items-center">
             <span className="capitalize text-sm text-gray-600">{formatLabel(itemName)}</span>
             <div className="flex items-center gap-2">
               <button onClick={() => handleQuantityChange(itemName, -1)} className="w-7 h-7 font-bold bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition flex items-center justify-center text-lg">−</button>
-              <span className="w-10 text-center font-semibold">{editedData[itemName]}</span>
+              <span className="w-10 text-center font-semibold text-gray-800">{editedData[itemName]}</span>
               <button onClick={() => handleQuantityChange(itemName, 1)} className="w-7 h-7 font-bold bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition flex items-center justify-center text-lg">+</button>
             </div>
           </div>
         ))}
       </div>
       <div className="border-t pt-3 mt-auto flex gap-3">
-        <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition shadow-md disabled:bg-gray-400">
+        <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition shadow-md disabled:bg-gray-400">
           {isSaving ? 'Saving...' : 'Save'}
         </button>
         <button onClick={handleCancel} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition">
@@ -147,7 +153,8 @@ const DisplayLaundary = () => {
       });
     });
     const slipItems = Object.entries(combined).filter(([, value]) => value > 0);
-    return { slipItems, totalCount };
+    const maxCount = Math.max(...slipItems.map(([, count]) => count), 0);
+    return { slipItems, totalCount, maxCount };
   }, [laundryData]);
 
   const handleDelete = async (laundryId) => {
@@ -192,10 +199,13 @@ const DisplayLaundary = () => {
         </header>
 
         {isLoading ? (
-          <p className="text-center text-gray-500 text-lg">Loading records...</p>
+          <div className="text-center py-20"><p className="text-gray-500 text-lg">Loading records...</p></div>
         ) : laundryData.length === 0 ? (
           <div className="text-center bg-white p-12 rounded-xl shadow-md border">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">No Laundry Found</h2>
+            <div className="w-16 h-16 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2" style={{fontFamily: "Poppins"}}>No Laundry Found</h2>
             <p className="text-gray-500 mb-6">There are no laundry records for the selected date.</p>
             <button
               onClick={() => navigate('/addLaundary')}
@@ -214,16 +224,24 @@ const DisplayLaundary = () => {
 
             <div className="lg:col-span-1">
               <div className="bg-white p-6 rounded-xl shadow-lg border sticky top-8">
-                <h2 className="text-2xl font-bold text-gray-800 border-b pb-4 mb-4">Daily Summary</h2>
-                <ul className="space-y-2 mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 border-b pb-4 mb-4" style={{fontFamily: "Poppins"}}>Daily Summary</h2>
+                <div className="space-y-3 mb-4">
                   {dailySummary.slipItems.map(([key, value]) => (
-                    <li key={key} className="flex justify-between border-b py-1 text-gray-700">
-                      <span className="capitalize">{formatLabel(key)}</span>
-                      <span className="font-semibold">{value}</span>
-                    </li>
+                    <div key={key} className="text-sm">
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-600 capitalize">{formatLabel(key)}</span>
+                        <span className="font-bold text-gray-800">{value}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-red-500 h-2 rounded-full" 
+                          style={{ width: `${(value / dailySummary.maxCount) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
-                <div className="text-right font-bold text-lg text-blue-800 border-t pt-2">
+                </div>
+                <div className="text-right font-bold text-lg text-red-800 border-t pt-2">
                   Total Clothes for the Day: {dailySummary.totalCount}
                 </div>
               </div>
