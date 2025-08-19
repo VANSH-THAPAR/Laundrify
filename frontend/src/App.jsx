@@ -55,7 +55,7 @@ function App() {
       {/* 2. This <main> tag holds all your page content.
          The pt-20 class pushes everything inside it down,
          creating space for the fixed navbar above. */}
-      <main className="pt-20">
+      <main className="pt-18">
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/displayLaundary' element={
