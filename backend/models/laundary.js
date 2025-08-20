@@ -11,7 +11,7 @@ const laundarySchema = mongoose.Schema({
         type:Date,
         default:Date.now
     },
-    // whole laundary slip and the above details will be fetched from jwt's payload
+
     bedsheet:{
         type:Number,
         default:0

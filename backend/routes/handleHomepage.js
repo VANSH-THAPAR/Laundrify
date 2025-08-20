@@ -3,11 +3,10 @@ const router = express.Router();
 const laundarySchema = require('../models/laundary');
 const checkJWT = require('../middleware/checkJWT');
 
-// GET all laundry entries for a specific date
 router.get('/home-laundry', checkJWT, async (req, res) => {
     try {
         const { roomNumber } = req.user;
-        const queryDate = req.query.date; // Expected format: 'YYYY-MM-DD'
+        const queryDate = req.query.date;
 
         const selectedDate = queryDate ? new Date(queryDate) : new Date();
 
@@ -32,7 +31,7 @@ router.get('/home-laundry', checkJWT, async (req, res) => {
     }
 });
 
-// GET a single laundry entry by its ID (for the edit page)
+
 router.get('/laundry/:laundryId', checkJWT, async (req, res) => {
     try {
         const { laundryId } = req.params;
@@ -48,7 +47,6 @@ router.get('/laundry/:laundryId', checkJWT, async (req, res) => {
 });
 
 
-// UPDATE a specific laundry entry by its ID
 router.put('/laundry/:laundryId', checkJWT, async (req, res) => {
     try {
         const { laundryId } = req.params;
@@ -68,7 +66,7 @@ router.put('/laundry/:laundryId', checkJWT, async (req, res) => {
 });
 
 
-// DELETE a specific laundry entry by its ID
+
 router.delete('/laundry/:laundryId', checkJWT, async (req, res) => {
     try {
         const { laundryId } = req.params;

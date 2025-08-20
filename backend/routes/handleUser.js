@@ -2,14 +2,12 @@ const express = require('express');
 const router = express.Router();
 const signupSchema = require('../models/signup');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs'); // You need bcrypt for password hashing
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// --- SIGN UP ROUTE ---
 router.post('/handlesignup', async (req, res) => {
     const { hostel, roomNumber, name, password } = req.body;
 
-    // 1. Basic Validation
     if (!hostel || !roomNumber || !name || !password) {
         return res.status(400).json({ message: "All fields are required." });
     }
@@ -20,26 +18,25 @@ router.post('/handlesignup', async (req, res) => {
     try {
         const roomId = `${hostel}${roomNumber}`;
 
-        // 2. Check if user with the same name already exists
+
         const existingUser = await signupSchema.findOne({ name });
         if (existingUser) {
             return res.status(409).json({ message: "A user with this name already exists." });
         }
 
-        // 3. Hash the password before saving
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = await signupSchema.create({
             roomId,
             name,
-            password: hashedPassword // Save the hashed password
+            password: hashedPassword
         });
 
         const payload = {
             roomNumber: newUser.roomId,
             name: newUser.name,
-            id: newUser._id // Include user ID in JWT
+            id: newUser._id
         };
 
         const token = jwt.sign(payload, process.env.jwt_secret, { expiresIn: '7d' });
@@ -52,30 +49,26 @@ router.post('/handlesignup', async (req, res) => {
     }
 });
 
-
-// --- LOGIN ROUTE ---
 router.post('/handlelogin', async (req, res) => {
-    const { roomId, name, password } = req.body; // Expect roomId, name, and password
+    const { roomId, name, password } = req.body;
 
-    // 1. Basic Validation
     if (!roomId || !name || !password) {
         return res.status(400).json({ message: "Room ID, name, and password are required." });
     }
 
     try {
-        // 2. Find the user by their unique name and matching room ID
+
         const user = await signupSchema.findOne({ name: name, roomId: roomId });
         if (!user) {
             return res.status(404).json({ message: "User not found. Please check your details." });
         }
 
-        // 3. Compare the provided password with the stored hashed password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid credentials. Please check your password." });
         }
 
-        // 4. If credentials are correct, create and send a JWT
+
         const payload = {
             roomNumber: user.roomId,
             name: user.name,

@@ -28,7 +28,7 @@ const AddLaundary = () => {
       schoolSweater: 0,
       coat: 0,
       blanket: 0,
-      scarves: 0, // Corrected from Scarves
+      scarves: 0,
     }
   });
 
