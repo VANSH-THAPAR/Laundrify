@@ -22,6 +22,6 @@ app.use('/',router);
 app.use('/',laundaryrouter);
 app.use('/',homeLaundary);
 
-app.listen(port,()=>{
+app.listen(port,"0.0.0.0",()=>{
     console.log(`http://localhost:${port}`);
 })
