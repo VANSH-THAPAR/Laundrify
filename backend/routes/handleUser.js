@@ -39,7 +39,7 @@ router.post('/handlesignup', async (req, res) => {
             id: newUser._id
         };
 
-        const token = jwt.sign(payload, process.env.jwt_secret, { expiresIn: '7d' });
+        const token = jwt.sign(payload, process.env.jwt_secret);
         
         res.status(201).json({ message: "User created successfully", token });
 
@@ -75,7 +75,7 @@ router.post('/handlelogin', async (req, res) => {
             id: user._id
         };
 
-        const token = jwt.sign(payload, process.env.jwt_secret, { expiresIn: '7d' });
+        const token = jwt.sign(payload, process.env.jwt_secret);
 
         res.status(200).json({ message: "Login successful", token });
 
