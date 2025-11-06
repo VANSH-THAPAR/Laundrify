@@ -5,8 +5,9 @@ const port = 3000;
 
 const cors = require('cors');
 const router = require('./routes/handleUser');
-const laundaryrouter = require('./routes/handleLaundary')
+const laundaryrouter = require('./routes/handleLaundary');
 const homeLaundary = require('./routes/handleHomepage');
+const profile = require('./routes/profile');
 app.use(cors());
 
 app.use(express.json());
@@ -21,6 +22,7 @@ app.get('/',(req,res)=>{
 app.use('/',router);
 app.use('/',laundaryrouter);
 app.use('/',homeLaundary);
+app.use('/', profile);
 
 app.listen(port,"0.0.0.0",()=>{
     console.log(`http://localhost:${port}`);
