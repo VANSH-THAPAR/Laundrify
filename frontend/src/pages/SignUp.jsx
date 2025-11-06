@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { GoogleLogin } from '@react-oauth/google';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,6 +20,7 @@ const SignUp = () => {
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("jwt"));
 
+  // ✅ Manual Signup
   const onSubmit = async (data) => {
     try {
       const response = await axios.post(`${backendUrl}/handlesignup`, data);
@@ -28,27 +30,51 @@ const SignUp = () => {
       navigate('/addLaundary');
     } catch (err) {
       console.error("Signup error:", err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError('root.serverError', {
-          type: 'server',
-          message: err.response.data.message,
-        });
-      } else {
-        setError('root.serverError', {
-          type: 'server',
-          message: 'An unexpected error occurred. Please try again.',
-        });
-      }
+      setError('root.serverError', {
+        type: 'server',
+        message: err.response?.data?.message || 'An unexpected error occurred. Please try again.',
+      });
     }
   };
 
+  // ✅ Google Sign Up
+  const handleGoogleSignup = async (credentialResponse) => {
+    try {
+      if (!credentialResponse.credential) {
+        throw new Error('Google credential missing');
+      }
+
+      const decoded = jwtDecode(credentialResponse.credential);
+      const googleEmail = decoded.email;
+      const name = decoded.name;
+
+      const response = await axios.post(`${backendUrl}/googleauth`, {
+        email: googleEmail,
+        name,
+      });
+
+      const { token } = response.data;
+      localStorage.setItem("jwt", token);
+      navigate('/addLaundary');
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+      alert("Google sign-up failed. Please try again.");
+    }
+  };
+
+  // ✅ Already Logged In Screen
   if (isLoggedIn) {
-      return (
-          <div className="flex flex-col items-center justify-center min-h-screen">
-              <h1 className="text-2xl">You are already logged in.</h1>
-              <button onClick={() => { localStorage.removeItem('jwt'); setIsLoggedIn(false); }} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">Logout</button>
-          </div>
-      )
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <h1 className="text-2xl font-semibold">You are already logged in.</h1>
+        <button
+          onClick={() => { localStorage.removeItem('jwt'); setIsLoggedIn(false); }}
+          className="mt-4 px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition"
+        >
+          Logout
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -66,18 +92,30 @@ const SignUp = () => {
 
         {/* Right Side: Form */}
         <div className="p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-red-700 text-center mb-2" style={{ fontFamily: "Bebas Neue" }}>
+          <h1 
+            className="text-4xl font-bold text-red-700 text-center mb-2"
+            style={{ fontFamily: "Bebas Neue" }}
+          >
             Create Your Account
           </h1>
-          <p className="text-center text-gray-600 mb-8" style={{fontFamily: "Poppins"}}>
+          <p 
+            className="text-center text-gray-600 mb-8"
+            style={{ fontFamily: "Poppins" }}
+          >
             Join Laundrify and simplify your laundry day!
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hostel and Room */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="hostel" className="block text-sm font-medium text-gray-700">Hostel</label>
-                <select id="hostel" {...register("hostel")} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                <select
+                  id="hostel"
+                  {...register("hostel")}
+                  className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="">Select Hostel</option>
                   <option value="sarabhai">Sarabhai</option>
                   <option value="aryabhatta">Aryabhatta</option>
                   <option value="boseBoys">Bose Boys</option>
@@ -87,31 +125,86 @@ const SignUp = () => {
                   <option value="teresa">Teresa</option>
                 </select>
               </div>
+
               <div>
                 <label htmlFor="roomNumber" className="block text-sm font-medium text-gray-700">Room No.</label>
-                <input type="number" id="roomNumber" {...register("roomNumber", { required: "Room number is required" })} placeholder="e.g., 101" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" />
+                <input
+                  type="number"
+                  id="roomNumber"
+                  {...register("roomNumber", { required: "Room number is required" })}
+                  placeholder="e.g., 101"
+                  className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                />
                 {errors.roomNumber && <p style={errorStyle}>{errors.roomNumber.message}</p>}
               </div>
             </div>
 
+            {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input type="text" id="name" {...register("name", { required: "Name is required" })} placeholder="John Doe" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" />
+              <input
+                type="text"
+                id="name"
+                {...register("name", { required: "Name is required" })}
+                placeholder="John Doe"
+                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              />
               {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
             </div>
 
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                id="email"
+                {...register("email", { required: "Email is required" })}
+                placeholder="example@gmail.com"
+                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.email && <p style={errorStyle}>{errors.email.message}</p>}
+            </div>
+
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input type="password" id="password" {...register("password", { required: "Password is required", minLength: { value: 6, message: "Password must be at least 6 characters" } })} placeholder="••••••••" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" />
+              <input
+                type="password"
+                id="password"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: { value: 6, message: "Password must be at least 6 characters" },
+                })}
+                placeholder="••••••••"
+                className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              />
               {errors.password && <p style={errorStyle}>{errors.password.message}</p>}
             </div>
 
-            {errors.root?.serverError && <p style={errorStyle} className="text-center">{errors.root.serverError.message}</p>}
+            {/* Server Error */}
+            {errors.root?.serverError && (
+              <p style={errorStyle} className="text-center">
+                {errors.root.serverError.message}
+              </p>
+            )}
 
+            {/* Submit Button */}
             <div>
-              <button type="submit" disabled={isSubmitting} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-400">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-400"
+              >
                 {isSubmitting ? 'Signing Up...' : 'Sign Up'}
               </button>
+            </div>
+
+            {/* Google Signup */}
+            <div className="flex justify-center mt-4">
+              <GoogleLogin
+                onSuccess={handleGoogleSignup}
+                onError={() => console.log('Google Signup Failed')}
+              />
             </div>
 
             <p className="text-center text-sm text-gray-600">

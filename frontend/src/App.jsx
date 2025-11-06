@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 import Navbar from './components/Navbar';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AddLaundary from './pages/AddLaundary';
@@ -10,6 +12,8 @@ import Login from './pages/Login';
 
 function App() {
   return (
+
+  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <BrowserRouter>
       <Navbar />
       <main className="pt-18">
@@ -30,6 +34,7 @@ function App() {
         </Routes>
       </main>
     </BrowserRouter>
+  </GoogleOAuthProvider>
   );
 }
 

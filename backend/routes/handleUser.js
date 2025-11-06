@@ -6,9 +6,9 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 router.post('/handlesignup', async (req, res) => {
-    const { hostel, roomNumber, name, password } = req.body;
+    const { hostel, roomNumber, name ,email, password } = req.body;
 
-    if (!hostel || !roomNumber || !name || !password) {
+    if (!hostel || !roomNumber || !name || !password || !email) {
         return res.status(400).json({ message: "All fields are required." });
     }
     if (password.length < 6) {
@@ -19,7 +19,7 @@ router.post('/handlesignup', async (req, res) => {
         const roomId = `${hostel}${roomNumber}`;
 
 
-        const existingUser = await signupSchema.findOne({ name });
+        const existingUser = await signupSchema.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ message: "A user with this name already exists." });
         }
@@ -30,12 +30,14 @@ router.post('/handlesignup', async (req, res) => {
         const newUser = await signupSchema.create({
             roomId,
             name,
+            email,
             password: hashedPassword
         });
 
         const payload = {
             roomNumber: newUser.roomId,
             name: newUser.name,
+            email: newUser.email,
             id: newUser._id
         };
 
@@ -49,40 +51,108 @@ router.post('/handlesignup', async (req, res) => {
     }
 });
 
+// router.post('/handlelogin', async (req, res) => {
+//     const { roomId, email, password } = req.body;
+
+//     if (!roomId || !email || !password) {
+//         return res.status(400).json({ message: "Room ID, name, and password are required." });
+//     }
+
+//     try {
+
+//         const user = await signupSchema.findOne({ email: email, roomId: roomId });
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found. Please check your details." });
+//         }
+
+//         const isMatch = await bcrypt.compare(password, user.password);
+//         if (!isMatch) {
+//             return res.status(401).json({ message: "Invalid credentials. Please check your password." });
+//         }
+
+
+//         const payload = {
+//             roomNumber: user.roomId,
+//             email: user.email,
+//             id: user._id
+//         };
+
+//         const token = jwt.sign(payload, process.env.jwt_secret);
+
+//         res.status(200).json({ message: "Login successful", token });
+
+//     } catch (err) {
+//         console.error("Login Error:", err);
+//         res.status(500).json({ message: "Server error during login." });
+//     }
+// });
+// Add to your existing router file
+
 router.post('/handlelogin', async (req, res) => {
-    const { roomId, name, password } = req.body;
+  const { roomId, email, password } = req.body;
 
-    if (!roomId || !name || !password) {
-        return res.status(400).json({ message: "Room ID, name, and password are required." });
+  if (!roomId || !email || !password) {
+    return res.status(400).json({ message: "Room ID, email, and password are required." });
+  }
+
+  try {
+    const user = await signupSchema.findOne({ email, roomId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found. Please check your details." });
     }
 
-    try {
-
-        const user = await signupSchema.findOne({ name: name, roomId: roomId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found. Please check your details." });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials. Please check your password." });
-        }
-
-
-        const payload = {
-            roomNumber: user.roomId,
-            name: user.name,
-            id: user._id
-        };
-
-        const token = jwt.sign(payload, process.env.jwt_secret);
-
-        res.status(200).json({ message: "Login successful", token });
-
-    } catch (err) {
-        console.error("Login Error:", err);
-        res.status(500).json({ message: "Server error during login." });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials. Please check your password." });
     }
+
+    const payload = {
+      roomNumber: user.roomId,
+      email: user.email,
+      name: user.name, // ✅ FIX: include name for frontend greeting
+      id: user._id,
+    };
+
+    const token = jwt.sign(payload, process.env.jwt_secret);
+    res.status(200).json({ message: "Login successful", token });
+
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ message: "Server error during login." });
+  }
 });
+
+
+router.post('/googleauth', async (req, res) => {
+  const { email, name } = req.body;
+
+  try {
+    let user = await signupSchema.findOne({ email });
+
+    if (!user) {
+      user = await signupSchema.create({
+        email,
+        name,
+        roomId: "googleuser",
+        password: await bcrypt.hash(process.env.GOOGLE_DEFAULT_PASS || "googleauth", 10),
+      });
+    }
+
+    const payload = {
+      roomNumber: user.roomId,
+      email: user.email,
+      name: user.name,
+      id: user._id,
+    };
+
+    const token = jwt.sign(payload, process.env.jwt_secret);
+    res.status(200).json({ token });
+  } catch (err) {
+    console.error("Google Auth Error:", err);
+    res.status(500).json({ message: "Error during Google authentication." });
+  }
+});
+
+
 
 module.exports = router;
