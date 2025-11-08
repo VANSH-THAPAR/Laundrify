@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const loginSchema = require('../models/laundary');
+const laundarySchema = require('../models/laundary');
 const jwt = require('jsonwebtoken');
 const checkJwt = require('../middleware/checkJWT')
 require('dotenv').config();
