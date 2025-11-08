@@ -1,14 +1,12 @@
-// models/LostAndFound.js
+// models/LostandFound.js
 const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema({
-  // Link to the user who posted it
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'signupModel', // Use the name of your user model
+    ref: 'signupModel',
     required: true
   },
-  // Store these for easy display
   userName: {
     type: String,
     required: true
@@ -17,7 +15,6 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // 'Lost' or 'Found'
   type: {
     type: String,
     enum: ['Lost', 'Found'],
@@ -28,13 +25,22 @@ const ticketSchema = new mongoose.Schema({
     required: [true, 'Please provide a description'],
     maxLength: 300
   },
-  // 'Open' or 'Resolved'
+  // --- ✅ NEW FIELD ---
+  imageUrl: {
+    type: String,
+    required: [true, 'Image is required.']
+  },
+  // --- ✅ NEW FIELD (for secure delete/resolve) ---
+  publicId: {
+    type: String,
+    required: true
+  },
   status: {
     type: String,
     enum: ['Open', 'Resolved'],
     default: 'Open'
   }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+}, { timestamps: true });
 
 const LostandFound = mongoose.model('LostandFound', ticketSchema);
 module.exports = LostandFound;

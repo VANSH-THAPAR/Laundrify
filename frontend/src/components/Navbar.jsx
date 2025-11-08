@@ -11,6 +11,8 @@ const LogoutIcon = ({ className }) => <svg className={className} xmlns="http://w
 const LoginIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>;
 const AddLaundryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14m-7-7h14"/></svg>;
 const DisplayLaundryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>;
+// --- ✅ 1. ADDED CHAT ICON ---
+const ChatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>;
 
 
 const ProfileDropdown = ({ isLoggedIn, handleLogout, username }) => {
@@ -169,6 +171,8 @@ const Navbar = () => {
             <ul className="flex flex-col items-center justify-center space-y-2" style={{ fontFamily: "Bebas Neue" }}>
                 <li><NavLink to="/addLaundary" className={mobileNavLinkClass} onClick={() => setMenuOpen(false)}><AddLaundryIcon /> Add Laundry</NavLink></li>
                 <li><NavLink to="/displayLaundary" className={mobileNavLinkClass} onClick={() => setMenuOpen(false)}><DisplayLaundryIcon /> Display Laundry</NavLink></li>
+                {/* --- ✅ 2. ADDED CHATROOM LINK --- */}
+                <li><NavLink to="/chatroom" className={mobileNavLinkClass} onClick={() => setMenuOpen(false)}><ChatIcon /> ChatRoom</NavLink></li>
                 <li className="w-full border-t border-zinc-700 my-2"></li>
                 {isLoggedIn ? (
                     <>
