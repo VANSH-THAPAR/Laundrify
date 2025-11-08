@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import ChatRoom from './pages/ChatRoom';
 
 function App() {
   return (
@@ -33,6 +34,11 @@ function App() {
             <Route path='/profile' element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+            } />
+            <Route path='/chatroom' element={
+            <ProtectedRoute>
+              <ChatRoom />
             </ProtectedRoute>
             } />
           <Route path='/signup' element={<SignUp />} />

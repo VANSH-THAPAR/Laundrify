@@ -139,6 +139,7 @@ const Navbar = () => {
               <ul className="flex items-center space-x-10">
                 <li><NavLink to="/addLaundary" className={navLinkClass}>Add Laundry</NavLink></li>
                 <li><NavLink to="/displayLaundary" className={navLinkClass}>Display Laundry</NavLink></li>
+                <li><NavLink to="/chatroom" className={navLinkClass}>ChatRoom</NavLink></li>
               </ul>
               <ProfileDropdown isLoggedIn={isLoggedIn} handleLogout={handleLogout} username={username} />
             </nav>
